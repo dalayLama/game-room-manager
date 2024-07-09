@@ -1,0 +1,3 @@
+rootProject.name = 'playhub-room-manager'
+include 'service'
+
