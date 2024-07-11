@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: ./v1_create_rooms_table.sql
+      relativeToChangelogFile: true
+  - include:
+      file: ./v2_create_rooms_participants_table.sql
+      relativeToChangelogFile: true

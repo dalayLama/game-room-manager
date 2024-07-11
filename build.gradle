@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '3.3.1'
     id 'io.spring.dependency-management' version '1.1.5'
     id 'idea'
+    id 'java-test-fixtures'
 }
 
 idea {
@@ -25,6 +26,10 @@ ext {
     ]
     libVersions = [
         mapstruct: "1.5.5.Final",
+        jimBeamCommonUtils: "0.0.1-SNAPSHOT",
+        jimBeamJpaUtils: "0.0.1-SNAPSHOT",
+        jimBeamPostgresContainer: "0.0.1-SNAPSHOT",
+        jimBemSpringLiquibase: "0.0.1-SNAPSHOT"
     ]
 }
 
@@ -44,10 +49,42 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'idea'
+    apply plugin: 'java-test-fixtures'
+
+    sourceSets {
+        integrationTest {
+            java.srcDir 'src/integrationTest/java'
+            resources.srcDir 'src/integrationTest/resources'
+            compileClasspath += main.output
+            runtimeClasspath += main.output
+        }
+    }
+
+    idea {
+        module {
+            testSourceDirs += project.sourceSets.integrationTest.java.srcDirs
+            testSourceDirs += project.sourceSets.integrationTest.resources.srcDirs
+        }
+    }
+
+    configurations {
+        integrationTestImplementation.extendsFrom testImplementation
+        integrationTestRuntime.extendsFrom testRuntime
+    }
+
+    task integrationTest(type: Test) {
+        useJUnitPlatform()
+        testClassesDirs = sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
+    }
+
+    processIntegrationTestResources {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 
     repositories {
-        mavenLocal()
         mavenCentral()
+        mavenLocal()
     }
 
     dependencyManagement {
@@ -58,16 +95,27 @@ subprojects {
             }
             dependency "org.mapstruct:mapstruct:$libVersions.mapstruct"
             dependency "org.mapstruct:mapstruct-processor:$libVersions.mapstruct"
+            dependency "com.jimbeam:common-utils:$libVersions.jimBeamCommonUtils"
+            dependency "com.jimbeam:spring-jpa-utils:$libVersions.jimBeamJpaUtils"
+            dependency "com.jimbeam:postgres-testcontainer:$libVersions.jimBeamPostgresContainer"
+            dependency "com.jimbeam:spring-liquibase:$libVersions.jimBemSpringLiquibase"
         }
     }
 
     dependencies {
-        compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
+        compileOnly 'org.projectlombok:lombok'
 
-        testImplementation 'org.springframework.boot:spring-boot-starter-test'
-        testImplementation 'org.springframework.security:spring-security-test'
+        testFixturesAnnotationProcessor 'org.projectlombok:lombok'
+        testFixturesCompileOnly 'org.projectlombok:lombok'
+
+        testAnnotationProcessor 'org.projectlombok:lombok'
+        testCompileOnly 'org.projectlombok:lombok'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+        integrationTestAnnotationProcessor 'org.projectlombok:lombok'
+        integrationTestCompileOnly 'org.projectlombok:lombok'
     }
 
 }
