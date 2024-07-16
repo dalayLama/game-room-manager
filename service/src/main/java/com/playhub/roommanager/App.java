@@ -1,4 +1,4 @@
-package com.playhub.roommanager.service;
+package com.playhub.roommanager;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

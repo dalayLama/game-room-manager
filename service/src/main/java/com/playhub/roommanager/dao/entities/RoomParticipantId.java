@@ -1,4 +1,4 @@
-package com.playhub.roommanager.service.dao.entities;
+package com.playhub.roommanager.dao.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

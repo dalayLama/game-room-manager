@@ -1,0 +1,6 @@
+{
+  "id": "590f1642-1959-4185-b602-f6b3fcdf1fd5",
+  "name": "Playhub user",
+  "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1OTBmMTY0Mi0xOTU5LTQxODUtYjYwMi1mNmIzZmNkZjFmZDUiLCJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjIsInJvbGVzIjpbIlJPTEVfUExBWUVSIl0sInByZWZlcnJlZF9uYW1lIjoiUGxheWh1YiB1c2VyIn0.b4Ek8BFbbQe2dY4BvOZv02P0532yhXLWkstSvS23wRo",
+  "roles": ["ROLE_PLAYER"]
+}

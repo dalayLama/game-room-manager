@@ -1,0 +1,17 @@
+<configuration>
+
+    <!-- Определяем аппендер для консоли -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Настройка логирования для ROOT логгера -->
+    <root level="info">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>

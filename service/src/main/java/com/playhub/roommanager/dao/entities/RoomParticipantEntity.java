@@ -1,11 +1,9 @@
-package com.playhub.roommanager.service.dao.entities;
+package com.playhub.roommanager.dao.entities;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.PostLoad;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,7 +11,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SourceType;
-import org.springframework.data.domain.Persistable;
 
 import java.time.Instant;
 import java.util.Objects;
