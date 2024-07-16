@@ -1,4 +1,4 @@
-package com.playhub.roommanager.service.dao.entities;
+package com.playhub.roommanager.dao.entities;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -7,6 +7,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,9 +20,10 @@ import org.hibernate.annotations.SourceType;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -41,18 +43,19 @@ public class RoomEntity {
     private UUID ownerId;
 
     @Column(name = "code", updatable = false)
-    @Size(max = 4)
+    @Size(min = 4, max = 4)
     private String securityCode;
 
     @Column(name = "max_participants", updatable = false)
+    @Min(1)
     private Integer maxParticipants;
 
     @OneToMany(mappedBy = "id.room", fetch = FetchType.LAZY, orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @Fetch(FetchMode.SUBSELECT)
-    private List<RoomParticipantEntity> participants = new ArrayList<>();
+    private Set<RoomParticipantEntity> participants = new HashSet<>();
 
-    @CreationTimestamp(source = SourceType.VM)
     @Column(name = "created_at", updatable = false)
+    @CreationTimestamp(source = SourceType.VM)
     private Instant createdAt;
 
     public void addParticipant(RoomParticipantEntity participant) {

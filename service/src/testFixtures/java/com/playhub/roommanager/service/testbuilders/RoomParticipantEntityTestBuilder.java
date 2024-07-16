@@ -1,9 +1,9 @@
 package com.playhub.roommanager.service.testbuilders;
 
 import com.jimbeam.test.utils.common.TestObjectBuilder;
-import com.jimbeam.test.utils.common.TestObjectBuilderUtils;
-import com.playhub.roommanager.service.dao.entities.RoomParticipantEntity;
-import com.playhub.roommanager.service.dao.entities.RoomParticipantId;
+import com.playhub.roommanager.dao.entities.RoomEntity;
+import com.playhub.roommanager.dao.entities.RoomParticipantEntity;
+import com.playhub.roommanager.dao.entities.RoomParticipantId;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
@@ -26,8 +26,13 @@ public class RoomParticipantEntityTestBuilder implements TestObjectBuilder<RoomP
                 .withAddedAt(null);
     }
 
+    public static RoomParticipantEntityTestBuilder aParticipant(RoomEntity room) {
+        return aParticipant()
+                .withId(new RoomParticipantId(room, UUID.randomUUID()));
+    }
+
     @Override
     public RoomParticipantEntity build() {
-        return TestObjectBuilderUtils.map(this, RoomParticipantEntity.class);
+        return new RoomParticipantEntity(id, addedAt);
     }
 }

@@ -1,16 +1,16 @@
 package com.playhub.roommanager.service.testbuilders;
 
 import com.jimbeam.test.utils.common.TestObjectBuilder;
-import com.jimbeam.test.utils.common.TestObjectBuilderUtils;
-import com.playhub.roommanager.service.dao.entities.RoomEntity;
-import com.playhub.roommanager.service.dao.entities.RoomParticipantEntity;
+import com.playhub.roommanager.dao.entities.RoomEntity;
+import com.playhub.roommanager.dao.entities.RoomParticipantEntity;
+import com.playhub.roommanager.model.requests.NewRoomRequest;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -26,19 +26,28 @@ public class RoomEntityTestBuilder implements TestObjectBuilder<RoomEntity> {
 
     private Integer maxParticipants = 10;
 
-    private List<RoomParticipantEntity> participants = new ArrayList<>();
+    private Set<RoomParticipantEntity> participants = new HashSet<>();
 
     private Instant createdAt = Instant.now();
 
     public static RoomEntityTestBuilder newRoom() {
-        return new RoomEntityTestBuilder()
+        return aRoom()
                 .withId(null)
                 .withCreatedAt(null);
     }
 
+    public static RoomEntityTestBuilder from(NewRoomRequest request) {
+        return newRoom()
+                .withOwnerId(request.ownerId())
+                .withSecurityCode(request.securityCode())
+                .withMaxParticipants(request.maxParticipants());
+    }
+
     @Override
     public RoomEntity build() {
-        return TestObjectBuilderUtils.map(this, RoomEntity.class);
+        RoomEntity room = new RoomEntity(id, ownerId, securityCode, maxParticipants, new HashSet<>(), createdAt);
+        participants.forEach(participant -> participant.setRoom(room));
+        return room;
     }
 
 }

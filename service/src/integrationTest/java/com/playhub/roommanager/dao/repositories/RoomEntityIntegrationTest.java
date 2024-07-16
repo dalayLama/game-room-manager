@@ -1,10 +1,10 @@
-package com.playhub.roommanager.service.dao.repositories;
+package com.playhub.roommanager.dao.repositories;
 
 import com.jimbeam.test.utils.spring.jpa.TestDBFacade;
 import com.jimbeam.test.utils.spring.liquibase.LiquibaseConfig;
 import com.jimbeam.test.utils.testcontainer.postgres.PostgresContainer;
-import com.playhub.roommanager.service.dao.entities.RoomParticipantEntity;
-import com.playhub.roommanager.service.dao.entities.RoomEntity;
+import com.playhub.roommanager.dao.entities.RoomParticipantEntity;
+import com.playhub.roommanager.dao.entities.RoomEntity;
 import com.playhub.roommanager.service.testbuilders.RoomParticipantEntityTestBuilder;
 import com.playhub.roommanager.service.testbuilders.RoomEntityTestBuilder;
 import lombok.extern.slf4j.Slf4j;

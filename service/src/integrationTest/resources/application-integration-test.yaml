@@ -24,3 +24,9 @@ spring:
         generate_statistics: true
         cache:
           use_second_level_cache: false
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
