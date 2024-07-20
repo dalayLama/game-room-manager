@@ -5,7 +5,9 @@ import com.playhub.roommanager.dao.entities.RoomParticipantEntity;
 import com.playhub.roommanager.model.Room;
 import com.playhub.roommanager.model.RoomParticipant;
 import com.playhub.roommanager.model.RoomParticipants;
+import com.playhub.roommanager.model.requests.NewParticipantRequest;
 import com.playhub.roommanager.model.requests.NewRoomRequest;
+import com.playhub.roommanager.restapi.dto.requests.NewParticipantRequestDto;
 import com.playhub.roommanager.restapi.dto.requests.NewRoomRequestDto;
 import com.playhub.roommanager.restapi.dto.responses.RoomParticipantsDto;
 import org.mapstruct.Mapper;
@@ -28,7 +30,7 @@ public interface RoomMapper {
 
     RoomParticipants toRoomParticipants(RoomEntity entity);
 
-    @Mapping(target = "id", source = "id.participantId")
+    @Mapping(target = "id", source = "participantId")
     RoomParticipant toRoomParticipant(RoomParticipantEntity entity);
 
     List<RoomParticipant> toRoomParticipants(Collection<? extends RoomParticipantEntity> entities);
@@ -41,4 +43,5 @@ public interface RoomMapper {
         return roomParticipant.id();
     }
 
+    NewParticipantRequest toNewParticipantRequest(NewParticipantRequestDto requestDto);
 }

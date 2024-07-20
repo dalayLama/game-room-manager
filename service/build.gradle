@@ -18,6 +18,7 @@ dependencies {
     integrationTestImplementation 'com.jimbeam:postgres-testcontainer'
     integrationTestImplementation 'com.jimbeam:spring-liquibase'
 
+    testFixturesImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     testFixturesImplementation 'com.fasterxml.jackson.core:jackson-core'
     testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
     testFixturesImplementation 'com.fasterxml.jackson.core:jackson-annotations'
