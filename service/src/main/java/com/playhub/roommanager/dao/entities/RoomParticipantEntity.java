@@ -1,74 +1,62 @@
 package com.playhub.roommanager.dao.entities;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SourceType;
 
 import java.time.Instant;
-import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "room_participants")
+@Table(name = "room_participants", indexes = {
+        @Index(name = "room_participant_uindex", columnList = "room_id, participant_id", unique = true),
+})
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @Builder
+@ToString(exclude = "room")
 public class RoomParticipantEntity {
 
     public static RoomParticipantEntity newParticipant(UUID participantId) {
         return builder()
-                .id(new RoomParticipantId(null, participantId))
+                .id(null)
+                .participantId(participantId)
                 .build();
     }
 
-    @EmbeddedId
-    private RoomParticipantId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false, updatable = false)
+    @NotNull
+    private RoomEntity room;
+
+    @Column(name = "participant_id", nullable = false, updatable = false)
+    @NotNull
+    private UUID participantId;
 
     @CreationTimestamp(source = SourceType.VM)
     @Column(name = "added_at", updatable = false)
     private Instant addedAt;
-
-    public UUID getParticipantId() {
-        return id.getParticipantId();
-    }
-
-    public RoomEntity getRoom() {
-        return this.id.getRoom();
-    }
-
-    public void setRoom(RoomEntity room) {
-        this.id.setRoom(room);
-    }
-
-    @Override
-    public String toString() {
-        return "ParticipantEntity{" +
-                "participantId=" + id +
-                ", addedAt=" + addedAt +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        RoomParticipantEntity that = (RoomParticipantEntity) object;
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
-    }
 
 }

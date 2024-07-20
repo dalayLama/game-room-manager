@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.With;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -45,8 +46,8 @@ public class RoomEntityTestBuilder implements TestObjectBuilder<RoomEntity> {
 
     @Override
     public RoomEntity build() {
-        RoomEntity room = new RoomEntity(id, ownerId, securityCode, maxParticipants, new HashSet<>(), createdAt);
-        participants.forEach(participant -> participant.setRoom(room));
+        RoomEntity room = new RoomEntity(id, ownerId, securityCode, maxParticipants, new ArrayList<>(), createdAt);
+        participants.forEach(room::addParticipant);
         return room;
     }
 

@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -20,10 +21,9 @@ import org.hibernate.annotations.SourceType;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Instant;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 @NoArgsConstructor
 @Getter
 @Setter
+@ToString(exclude = "participants")
 public class RoomEntity {
 
     @Id
@@ -50,9 +51,9 @@ public class RoomEntity {
     @Min(1)
     private Integer maxParticipants;
 
-    @OneToMany(mappedBy = "id.room", fetch = FetchType.LAZY, orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "room", fetch = FetchType.LAZY, orphanRemoval = true, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @Fetch(FetchMode.SUBSELECT)
-    private Set<RoomParticipantEntity> participants = new HashSet<>();
+    private List<RoomParticipantEntity> participants = new ArrayList<>();
 
     @Column(name = "created_at", updatable = false)
     @CreationTimestamp(source = SourceType.VM)
@@ -80,14 +81,4 @@ public class RoomEntity {
         return participants.stream().filter(predicate).toList();
     }
 
-    @Override
-    public String toString() {
-        return "RoomEntity{" +
-                "id=" + id +
-                ", ownerId=" + ownerId +
-                ", securityCode='" + securityCode + '\'' +
-                ", maxParticipants=" + maxParticipants +
-                ", createdAt=" + createdAt +
-                '}';
-    }
 }
