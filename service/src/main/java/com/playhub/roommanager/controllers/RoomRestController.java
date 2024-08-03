@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -50,6 +51,14 @@ public class RoomRestController {
                                                @Valid @RequestBody NewParticipantRequestDto requestDto) {
         NewParticipantRequest request = mapper.toNewParticipantRequest(requestDto);
         roomService.addParticipant(roomId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping(ApiPaths.V1_ROOM_PARTICIPANT)
+    public ResponseEntity<Void> deleteParticipant(
+            @PathVariable("roomId") UUID roomId,
+            @PathVariable("participantId") UUID participantId) {
+        roomService.deleteParticipant(roomId, participantId);
         return ResponseEntity.ok().build();
     }
 
