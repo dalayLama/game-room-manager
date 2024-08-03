@@ -46,6 +46,12 @@ public class RoomRestController {
         return ResponseEntity.created(uri).body(responseDto);
     }
 
+    @DeleteMapping(ApiPaths.V1_ROOM)
+    public ResponseEntity<Void> deleteRoom(@PathVariable("roomId") UUID roomId) {
+        roomService.deleteRoom(roomId);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping(ApiPaths.V1_ROOM_PARTICIPANTS)
     public ResponseEntity<Void> addParticipant(@PathVariable("roomId") UUID roomId,
                                                @Valid @RequestBody NewParticipantRequestDto requestDto) {

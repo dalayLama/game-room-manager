@@ -16,4 +16,6 @@ public interface RoomService {
 
     void deleteParticipant(@NotNull UUID roomId, @NotNull UUID participantId);
 
+    void deleteRoom(@NotNull UUID id);
+
 }
