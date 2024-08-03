@@ -339,6 +339,26 @@ class RoomRestControllerIntegrationTest {
                 .andDo(print());
     }
 
+    @Test
+    @Sql(scripts = {
+            "/sql/fill-rooms.sql",
+    }, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = {
+            "delete from room_participants",
+            "delete from rooms"
+    }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void shouldDeleteRoom() throws Exception {
+        UserInfo userInfo = UserInfoUtils.getUserInfo();
+        UUID roomId = UUID.fromString("364c0c8b-2c64-4de7-a3cf-adc5d7a4df11");
+
+        mockMvc.perform(delete(ApiPaths.V1_ROOM, roomId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userInfo.jwtToken())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(print());
+    }
+
+
     private String localedMessage(Locale locale, String en, String ru) {
         return locale.getLanguage().equals("ru-ru") ? ru : en;
     }

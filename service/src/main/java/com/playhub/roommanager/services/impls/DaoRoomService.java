@@ -74,6 +74,13 @@ public class DaoRoomService implements RoomService {
         );
     }
 
+    @Override
+    @Transactional
+    public void deleteRoom(@NotNull UUID id) {
+        RoomEntity room = getById(dao::lockRoomForWriting, id);
+        dao.deleteRoom(room);
+    }
+
     private void deleteParticipant(RoomEntity room, RoomParticipantEntity participant) {
         if (RoomUtil.isRoomOwner(participant, room) || room.getParticipants().size() < 2) {
             dao.deleteRoom(room);
