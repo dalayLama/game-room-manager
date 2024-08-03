@@ -10,8 +10,7 @@ import lombok.With;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -27,7 +26,7 @@ public class RoomEntityTestBuilder implements TestObjectBuilder<RoomEntity> {
 
     private Integer maxParticipants = 10;
 
-    private Set<RoomParticipantEntity> participants = new HashSet<>();
+    private List<RoomParticipantEntity> participants = new ArrayList<>();
 
     private Instant createdAt = Instant.now();
 

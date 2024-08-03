@@ -19,7 +19,7 @@ public class RoomParticipantEntityTestBuilder implements TestObjectBuilder<RoomP
 
     private RoomEntity room = RoomEntityTestBuilder.aRoom().build();
 
-    private UUID participantId = UUID.fromString("b9783ba7-2fa8-4688-b11a-f2a3506a0971");
+    private UUID participantId = UUID.randomUUID();
 
     private Instant addedAt = Instant.now();
 
@@ -38,7 +38,9 @@ public class RoomParticipantEntityTestBuilder implements TestObjectBuilder<RoomP
     @Override
     public RoomParticipantEntity build() {
         RoomParticipantEntity participant = new RoomParticipantEntity(id, null, participantId, addedAt);
-        room.addParticipant(participant);
+        if (room != null) {
+            room.addParticipant(participant);
+        }
         return participant;
     }
 }

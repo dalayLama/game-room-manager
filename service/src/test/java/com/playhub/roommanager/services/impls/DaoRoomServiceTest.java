@@ -1,11 +1,10 @@
 package com.playhub.roommanager.services.impls;
 
 import com.playhub.roommanager.components.RoomInspector;
+import com.playhub.roommanager.dao.RoomDao;
 import com.playhub.roommanager.dao.entities.RoomEntity;
 import com.playhub.roommanager.dao.entities.RoomParticipantEntity;
-import com.playhub.roommanager.dao.repositories.RoomRepository;
 import com.playhub.roommanager.mappers.RoomMapper;
-import com.playhub.roommanager.model.RoomParticipant;
 import com.playhub.roommanager.model.RoomParticipants;
 import com.playhub.roommanager.model.requests.NewParticipantRequest;
 import com.playhub.roommanager.model.requests.NewRoomRequest;
@@ -15,7 +14,6 @@ import com.playhub.roommanager.service.testbuilders.RoomEntityTestBuilder;
 import com.playhub.roommanager.service.testbuilders.RoomParticipantEntityTestBuilder;
 import com.playhub.roommanager.service.testbuilders.RoomParticipantsTestBuilder;
 import lombok.RequiredArgsConstructor;
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
@@ -26,13 +24,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,7 +41,7 @@ import static org.mockito.Mockito.when;
 class DaoRoomServiceTest {
 
     @Mock
-    private RoomRepository repository;
+    private RoomDao dao;
 
     @Mock
     private RoomMapper mapper;
@@ -61,7 +60,7 @@ class DaoRoomServiceTest {
 
         SavingRoomMatcher matcher = new SavingRoomMatcher(request);
         when(mapper.toRoomEntity(request)).thenReturn(newEntity);
-        when(repository.saveAndFlush(argThat(matcher))).thenReturn(newEntity);
+        when(dao.saveRoom(argThat(matcher))).thenReturn(newEntity);
         when(mapper.toRoomParticipants(newEntity)).thenReturn(expectedResult);
 
         RoomParticipants result = service.createRoom(request);
@@ -77,8 +76,8 @@ class DaoRoomServiceTest {
         RoomParticipants mockedResult = RoomParticipantsTestBuilder.aRoom().build();
 
         SavingParticipantMatcher matcher = new SavingParticipantMatcher(request);
-        when(repository.pessimisticWrite(roomId)).thenReturn(Optional.of(room));
-        when(repository.saveAndFlush(argThat(matcher))).thenAnswer(returnsFirstArg());
+        when(dao.lockRoomForWriting(roomId)).thenReturn(Optional.of(room));
+        when(dao.saveRoom(argThat(matcher))).thenAnswer(returnsFirstArg());
         when(mapper.toRoomParticipants(room)).thenReturn(mockedResult);
 
         RoomParticipants result = service.addParticipant(roomId, request);
@@ -92,21 +91,99 @@ class DaoRoomServiceTest {
         UUID roomId = UUID.fromString("7aedb61f-8991-4806-b3ea-c815a4b5d253");
         NewParticipantRequest request = NewParticipantRequestTestBuilder.aRequest().build();
         RoomEntity room = RoomEntityTestBuilder.aRoom()
-                .withParticipants(Set.of(
+                .withParticipants(List.of(
                         RoomParticipantEntityTestBuilder.aParticipant().withParticipantId(request.participantId()).build()
                 ))
                 .build();
 
-        RoomParticipants mockedResult = RoomParticipantsTestBuilder.aRoom().build();
+        RoomParticipants mockedResult = RoomParticipantsTestBuilder.from(room).build();
 
-        when(repository.pessimisticWrite(roomId)).thenReturn(Optional.of(room));
+        when(dao.lockRoomForWriting(roomId)).thenReturn(Optional.of(room));
         when(mapper.toRoomParticipants(room)).thenReturn(mockedResult);
 
         RoomParticipants result = service.addParticipant(roomId, request);
 
         verify(inspector, never()).inspectNewParticipant(room, request);
-        verify(repository, never()).saveAndFlush(any());
+        verify(dao, never()).saveRoom(any());
         assertThat(result).isSameAs(mockedResult);
+    }
+
+    @Test
+    void shouldDeleteParticipant() {
+        UUID roomId = UUID.fromString("7aedb61f-8991-4806-b3ea-c815a4b5d253");
+        UUID participantId = UUID.fromString("2fb4b9bf-3ab0-4185-844a-b40dc36a91ce");
+        RoomParticipantEntity participant = RoomParticipantEntityTestBuilder
+                .aParticipant()
+                .withParticipantId(participantId)
+                .build();
+        RoomParticipantEntity participant2 = RoomParticipantEntityTestBuilder
+                .aParticipant()
+                .withId(participant.getId() + 1L)
+                .build();
+        RoomEntity room = RoomEntityTestBuilder.aRoom()
+                .withId(roomId)
+                .withParticipants(List.of(participant, participant2))
+                .build();
+        List<RoomParticipantEntity> expectedParticipants = List.of(participant2);
+
+        when(dao.lockRoomForWriting(roomId)).thenReturn(Optional.of(room));
+        when(dao.saveRoom(  room)).then(returnsFirstArg());
+
+        assertThatCode(() -> service.deleteParticipant(roomId, participantId)).doesNotThrowAnyException();
+
+        verify(dao).saveRoom(room);
+        assertThat(room.getParticipants()).containsExactlyInAnyOrderElementsOf(expectedParticipants);
+    }
+
+    @Test
+    void shouldNotDeleteParticipantIfAbsent() {
+        UUID roomId = UUID.fromString("7aedb61f-8991-4806-b3ea-c815a4b5d253");
+        UUID participantId = UUID.fromString("2fb4b9bf-3ab0-4185-844a-b40dc36a91ce");
+        RoomParticipantEntity participant = RoomParticipantEntityTestBuilder
+                .aParticipant()
+                .build();
+        RoomParticipantEntity participant2 = RoomParticipantEntityTestBuilder
+                .aParticipant()
+                .withId(participant.getId() + 1L)
+                .build();
+        RoomEntity room = RoomEntityTestBuilder.aRoom()
+                .withId(roomId)
+                .withParticipants(List.of(participant, participant2))
+                .build();
+        List<RoomParticipantEntity> expectedParticipants = List.of(participant, participant2);
+
+        when(dao.lockRoomForWriting(roomId)).thenReturn(Optional.of(room));
+
+        assertThatCode(() -> service.deleteParticipant(roomId, participantId)).doesNotThrowAnyException();
+
+        verify(dao, never()).saveRoom(any());
+        assertThat(room.getParticipants()).containsExactlyInAnyOrderElementsOf(expectedParticipants);
+    }
+
+    @Test
+    void shouldDeleteRoomDuringDeletingParticipantIfParticipantIsOwner() {
+        UUID roomId = UUID.fromString("7aedb61f-8991-4806-b3ea-c815a4b5d253");
+        UUID participantId = UUID.fromString("2fb4b9bf-3ab0-4185-844a-b40dc36a91ce");
+        RoomParticipantEntity participant = RoomParticipantEntityTestBuilder
+                .aParticipant()
+                .withParticipantId(participantId)
+                .build();
+        RoomParticipantEntity participant2 = RoomParticipantEntityTestBuilder
+                .aParticipant()
+                .withId(participant.getId() + 1L)
+                .build();
+        RoomEntity room = RoomEntityTestBuilder.aRoom()
+                .withId(roomId)
+                .withOwnerId(participantId)
+                .withParticipants(List.of(participant, participant2))
+                .build();
+
+        when(dao.lockRoomForWriting(roomId)).thenReturn(Optional.of(room));
+
+        assertThatCode(() -> service.deleteParticipant(roomId, participantId)).doesNotThrowAnyException();
+
+        verify(dao, never()).saveRoom(room);
+        verify(dao).deleteRoom(room);
     }
 
     @RequiredArgsConstructor

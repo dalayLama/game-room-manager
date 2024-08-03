@@ -52,7 +52,7 @@ class RoomMapperTest {
     @Test
     void shouldConvertRoomEntityToRoomParticipants() {
         RoomEntity room = RoomEntityTestBuilder.aRoom()
-                .withParticipants(Set.of(
+                .withParticipants(List.of(
                         RoomParticipantEntityTestBuilder.aParticipant().build(),
                         RoomParticipantEntityTestBuilder.aParticipant().build()
                 ))

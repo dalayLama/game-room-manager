@@ -31,7 +31,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder = true)
 @ToString(exclude = "room")
 public class RoomParticipantEntity {
 
