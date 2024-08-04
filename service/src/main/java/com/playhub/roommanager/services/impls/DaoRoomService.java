@@ -92,6 +92,13 @@ public class DaoRoomService implements RoomService {
         } else {
             room.deleteParticipant(participant);
             dao.saveRoom(room);
+            ParticipantEvent event = new ParticipantEvent(
+                    this,
+                    DomainEventType.DELETE,
+                    mapper.toRoom(room),
+                    mapper.toRoomParticipant(participant)
+            );
+            eventPublisher.publishEvent(event);
         }
     }
 

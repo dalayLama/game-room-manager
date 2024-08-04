@@ -144,13 +144,20 @@ class DaoRoomServiceTest {
                 .withParticipants(List.of(participant, participant2))
                 .build();
         List<RoomParticipantEntity> expectedParticipants = List.of(participant2);
+        Room mockedRoom = RoomTestBuilder.aRoom().build();
+        RoomParticipant mockedParticipant = RoomParticipantTestBuilder.aParticipant().build();
 
         when(dao.lockRoomForWriting(roomId)).thenReturn(Optional.of(room));
-        when(dao.saveRoom(  room)).then(returnsFirstArg());
+        when(dao.saveRoom(room)).then(returnsFirstArg());
+        when(mapper.toRoom(room)).thenReturn(mockedRoom);
+        when(mapper.toRoomParticipant(participant)).thenReturn(mockedParticipant);
 
         assertThatCode(() -> service.deleteParticipant(roomId, participantId)).doesNotThrowAnyException();
 
         verify(dao).saveRoom(room);
+        verify(eventPublisher).publishEvent(
+                new ParticipantEvent(service, DomainEventType.DELETE, mockedRoom, mockedParticipant)
+        );
         assertThat(room.getParticipants()).containsExactlyInAnyOrderElementsOf(expectedParticipants);
     }
 
@@ -176,6 +183,7 @@ class DaoRoomServiceTest {
         assertThatCode(() -> service.deleteParticipant(roomId, participantId)).doesNotThrowAnyException();
 
         verify(dao, never()).saveRoom(any());
+        verify(eventPublisher, never()).publishEvent(any());
         assertThat(room.getParticipants()).containsExactlyInAnyOrderElementsOf(expectedParticipants);
     }
 
