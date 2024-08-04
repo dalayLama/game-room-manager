@@ -1,6 +1,8 @@
-package com.playhub.roommanager.dao;
+package com.playhub.roommanager.dao.impls;
 
+import com.playhub.roommanager.dao.RoomDao;
 import com.playhub.roommanager.dao.entities.RoomEntity;
+import com.playhub.roommanager.dao.entities.RoomParticipantEntity;
 import com.playhub.roommanager.dao.repositories.RoomParticipantRepository;
 import com.playhub.roommanager.dao.repositories.RoomRepository;
 import jakarta.validation.constraints.NotNull;
@@ -26,6 +28,11 @@ public class JpaRoomDao implements RoomDao {
     }
 
     @Override
+    public Optional<RoomEntity> findRoomById(@NotNull UUID id) {
+        return roomRepo.findById(id);
+    }
+
+    @Override
     public RoomEntity saveRoom(@NotNull RoomEntity room) {
         return roomRepo.saveAndFlush(room);
     }
@@ -41,4 +48,8 @@ public class JpaRoomDao implements RoomDao {
         roomRepo.deleteById(roomId);
     }
 
+    @Override
+    public Optional<RoomParticipantEntity> findByRoomIdAndParticipantId(@NotNull UUID roomId, @NotNull UUID participantId) {
+        return participantRepo.findByRoomIdAndParticipantId(roomId, participantId);
+    }
 }

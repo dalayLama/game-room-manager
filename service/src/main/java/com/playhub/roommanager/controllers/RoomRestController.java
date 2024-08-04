@@ -13,6 +13,7 @@ import com.playhub.roommanager.services.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,6 +48,7 @@ public class RoomRestController {
     }
 
     @DeleteMapping(ApiPaths.V1_ROOM)
+    @PreAuthorize("@roomSecurityService.canDeleteRoom(#roomId)")
     public ResponseEntity<Void> deleteRoom(@PathVariable("roomId") UUID roomId) {
         roomService.deleteRoom(roomId);
         return ResponseEntity.ok().build();
@@ -61,6 +63,7 @@ public class RoomRestController {
     }
 
     @DeleteMapping(ApiPaths.V1_ROOM_PARTICIPANT)
+    @PreAuthorize("@roomSecurityService.canDeleteParticipant(#roomId, #participantId)")
     public ResponseEntity<Void> deleteParticipant(
             @PathVariable("roomId") UUID roomId,
             @PathVariable("participantId") UUID participantId) {
