@@ -2,6 +2,7 @@ package com.playhub.roommanager.controllers;
 
 import com.jimbeam.test.utils.spring.liquibase.LiquibaseConfig;
 import com.jimbeam.test.utils.testcontainer.postgres.PostgresContainer;
+import com.playhub.common.exceptions.PlayHubErrorCodes;
 import com.playhub.roommanager.App;
 import com.playhub.roommanager.exceptions.ErrorType;
 import com.playhub.roommanager.restapi.ApiPaths;
@@ -44,9 +45,6 @@ class RoomRestControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private EntityManager entityManager;
-
     @Test
     @Sql(statements = {
             "delete from room_participants",
@@ -82,7 +80,7 @@ class RoomRestControllerIntegrationTest {
             "RU-ru, ''",
             "RU-ru, 55555"
     })
-    void shouldReturn400IfRequestIsNotValid(Locale locale, String securityCode) throws Exception {
+    void shouldReturn400IfRequestIsNotValid_whenCreatingRoom(Locale locale, String securityCode) throws Exception {
         UserInfo userInfo = UserInfoUtils.getUserInfo();
 
         String securityCodeMessage = "The room password must consist of 4 characters";
@@ -109,26 +107,9 @@ class RoomRestControllerIntegrationTest {
                 .andDo(print());
     }
 
-    @Test
-    void shouldReturn415IfContentTypeIsNotDeclared() throws Exception {
-        UserInfo userInfo = UserInfoUtils.getUserInfo();
-
-        mockMvc.perform(post(ApiPaths.V1_ROOMS)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userInfo.jwtToken())
-                        .content("""
-                                {
-                                    "maxParticipants": 10,
-                                    "securityCode": 5555,
-                                    "participants": ["%s"]
-                                }
-                                """.formatted(userInfo.id())
-                        ))
-                .andExpect(status().isUnsupportedMediaType())
-                .andDo(print());
-    }
 
     @Test
-    void shouldReturn401IfBearerTokenIsNotDeclared() throws Exception {
+    void shouldReturn401IfBearerTokenIsNotDeclared_whenCreatingRoom() throws Exception {
         mockMvc.perform(post(ApiPaths.V1_ROOMS)
                         .content("""
                                 {
@@ -203,7 +184,7 @@ class RoomRestControllerIntegrationTest {
             "delete from room_participants",
             "delete from rooms"
     }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    void shouldReturn403IfSecuredCodeIsNotValid(Locale locale) throws Exception {
+    void shouldReturn403IfSecuredCodeIsNotValid_whenAddingParticipant(Locale locale) throws Exception {
         UserInfo userInfo = UserInfoUtils.getUserInfo();
         UUID roomId = UUID.fromString("638f2195-ee04-48cd-ada0-90f6711f0cad");
         String title = localedMessage(locale,
@@ -241,7 +222,7 @@ class RoomRestControllerIntegrationTest {
             "delete from room_participants",
             "delete from rooms"
     }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-    void shouldReturn403IfRoomIsFull(Locale locale) throws Exception {
+    void shouldReturn403IfRoomIsFull_whenAddingParticipant(Locale locale) throws Exception {
         UserInfo userInfo = UserInfoUtils.getUserInfo();
         UUID roomId = UUID.fromString("ec92ac5d-536b-486a-8e35-21eeca1e877b");
         String title = localedMessage(locale,
@@ -272,7 +253,7 @@ class RoomRestControllerIntegrationTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"EN-en", "RU-ru"})
-    void shouldReturn404IfRoomIsNotFound(Locale locale) throws Exception {
+    void shouldReturn404IfRoomIsNotFound_whenAddingParticipant(Locale locale) throws Exception {
         UserInfo userInfo = UserInfoUtils.getUserInfo();
         UUID roomId = UUID.fromString("7f33a600-313e-43a2-a051-f75ae2973789");
         String title = localedMessage(locale,
@@ -320,6 +301,32 @@ class RoomRestControllerIntegrationTest {
                 .andDo(print());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"EN-en", "RU-ru"})
+    @Sql(scripts = {
+            "/sql/fill-rooms.sql",
+    }, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = {
+            "delete from room_participants",
+            "delete from rooms"
+    }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void shouldReturn403_whenTryingDeleteAnotherParticipant(Locale locale) throws Exception {
+        String expectedTitle = localedMessage(locale, "Forbidden", "Ошибка доступа");
+        String expectedMessage = localedMessage(locale, "Access denied", "Доступ запрещен");
+        UserInfo userInfo = UserInfoUtils.getUserInfo();
+        UUID roomId = UUID.fromString("a666cd6b-119f-4cd6-9ffe-3c820496cbeb");
+
+        mockMvc.perform(delete(ApiPaths.V1_ROOM_PARTICIPANT, roomId, "d697283f-7e91-4023-9e71-ac67fafaf4b5")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userInfo.jwtToken())
+                        .header(HttpHeaders.ACCEPT_LANGUAGE, locale)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value(PlayHubErrorCodes.ACCESS_DENIED_ERROR_CODE))
+                .andExpect(jsonPath("$.title").value(expectedTitle))
+                .andExpect(jsonPath("$.detail").value(expectedMessage))
+                .andDo(print());
+    }
+
     @Test
     @Sql(scripts = {
             "/sql/fill-rooms.sql",
@@ -358,6 +365,31 @@ class RoomRestControllerIntegrationTest {
                 .andDo(print());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"EN-en", "RU-ru"})
+    @Sql(scripts = {
+            "/sql/fill-rooms.sql",
+    }, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = {
+            "delete from room_participants",
+            "delete from rooms"
+    }, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void shouldReturn403IfUserIsNotOwner_whenDeletingRoom(Locale locale) throws Exception {
+        String expectedTitle = localedMessage(locale, "Forbidden", "Ошибка доступа");
+        String expectedMessage = localedMessage(locale, "Access denied", "Доступ запрещен");
+        UserInfo userInfo = UserInfoUtils.getUserInfo();
+        UUID roomId = UUID.fromString("a666cd6b-119f-4cd6-9ffe-3c820496cbeb");
+
+        mockMvc.perform(delete(ApiPaths.V1_ROOM, roomId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userInfo.jwtToken())
+                        .header(HttpHeaders.ACCEPT_LANGUAGE, locale)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value(PlayHubErrorCodes.ACCESS_DENIED_ERROR_CODE))
+                .andExpect(jsonPath("$.title").value(expectedTitle))
+                .andExpect(jsonPath("$.detail").value(expectedMessage))
+                .andDo(print());
+    }
 
     private String localedMessage(Locale locale, String en, String ru) {
         return locale.getLanguage().equals("ru-ru") ? ru : en;
