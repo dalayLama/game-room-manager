@@ -7,12 +7,15 @@ import org.springframework.context.ApplicationEvent;
 import java.util.Objects;
 
 @Getter
-public class RoomCreatedEvent extends ApplicationEvent {
+public class RoomEvent extends ApplicationEvent {
+
+    private final DomainEventType eventType;
 
     private final RoomParticipants roomParticipants;
 
-    public RoomCreatedEvent(Object source, RoomParticipants roomParticipants) {
+    public RoomEvent(Object source, DomainEventType eventType, RoomParticipants roomParticipants) {
         super(source);
+        this.eventType = eventType;
         this.roomParticipants = roomParticipants;
     }
 
@@ -20,13 +23,15 @@ public class RoomCreatedEvent extends ApplicationEvent {
     public boolean equals(Object object) {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
-        RoomCreatedEvent that = (RoomCreatedEvent) object;
-        return source.equals(that.source) && Objects.equals(roomParticipants, that.roomParticipants);
+        RoomEvent that = (RoomEvent) object;
+        return Objects.equals(source, that.source)
+                && Objects.equals(eventType, that.eventType)
+                && Objects.equals(roomParticipants, that.roomParticipants);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(source, roomParticipants);
+        return Objects.hash(source, eventType, roomParticipants);
     }
 
 }

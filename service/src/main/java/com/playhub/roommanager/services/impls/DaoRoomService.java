@@ -4,7 +4,9 @@ import com.playhub.roommanager.components.RoomInspector;
 import com.playhub.roommanager.dao.RoomDao;
 import com.playhub.roommanager.dao.entities.RoomEntity;
 import com.playhub.roommanager.dao.entities.RoomParticipantEntity;
-import com.playhub.roommanager.events.RoomCreatedEvent;
+import com.playhub.roommanager.events.DomainEventType;
+import com.playhub.roommanager.events.ParticipantEvent;
+import com.playhub.roommanager.events.RoomEvent;
 import com.playhub.roommanager.exceptions.RoomNotFoundByIdException;
 import com.playhub.roommanager.mappers.RoomMapper;
 import com.playhub.roommanager.model.RoomParticipants;
@@ -48,7 +50,7 @@ public class DaoRoomService implements RoomService {
                 .forEach(room::addParticipant);
         RoomEntity savedRoom = dao.saveRoom(room);
         RoomParticipants roomParticipants = mapper.toRoomParticipants(savedRoom);
-        eventPublisher.publishEvent(new RoomCreatedEvent(this, roomParticipants));
+        eventPublisher.publishEvent(new RoomEvent(this, DomainEventType.NEW, roomParticipants));
         return roomParticipants;
     }
 
@@ -60,10 +62,7 @@ public class DaoRoomService implements RoomService {
                 p -> log.info(
                         "Participant with id {} already exists in the room with id {}", request.participantId(), roomId
                 ),
-                () -> {
-                    addParticipantToRoom(room, request);
-                    dao.saveRoom(room);
-                }
+                () -> addParticipantToRoom(room, request)
         );
         return mapper.toRoomParticipants(room);
     }
@@ -100,6 +99,16 @@ public class DaoRoomService implements RoomService {
         roomInspector.inspectNewParticipant(room, request);
         RoomParticipantEntity newParticipant = RoomParticipantEntity.newParticipant(request.participantId());
         room.addParticipant(newParticipant);
+        dao.saveRoom(room);
+        room.findParticipantById(request.participantId()).ifPresent(p -> {
+            ParticipantEvent event = new ParticipantEvent(
+                    this,
+                    DomainEventType.NEW,
+                    mapper.toRoom(room),
+                    mapper.toRoomParticipant(p)
+            );
+            eventPublisher.publishEvent(event);
+        });
     }
 
     private RoomEntity getById(Function<UUID, Optional<RoomEntity>> function, UUID id) {
