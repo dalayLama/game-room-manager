@@ -4,6 +4,7 @@ import com.playhub.roommanager.components.RoomInspector;
 import com.playhub.roommanager.dao.RoomDao;
 import com.playhub.roommanager.dao.entities.RoomEntity;
 import com.playhub.roommanager.dao.entities.RoomParticipantEntity;
+import com.playhub.roommanager.events.RoomCreatedEvent;
 import com.playhub.roommanager.mappers.RoomMapper;
 import com.playhub.roommanager.model.RoomParticipants;
 import com.playhub.roommanager.model.requests.NewParticipantRequest;
@@ -20,6 +21,7 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Objects;
@@ -49,6 +51,9 @@ class DaoRoomServiceTest {
     @Mock
     private RoomInspector inspector;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private DaoRoomService service;
 
@@ -65,6 +70,7 @@ class DaoRoomServiceTest {
 
         RoomParticipants result = service.createRoom(request);
         assertThat(result).isSameAs(expectedResult);
+        verify(eventPublisher).publishEvent(new RoomCreatedEvent(service, expectedResult));
     }
 
     @Test

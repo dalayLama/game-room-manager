@@ -4,6 +4,7 @@ import com.playhub.roommanager.components.RoomInspector;
 import com.playhub.roommanager.dao.RoomDao;
 import com.playhub.roommanager.dao.entities.RoomEntity;
 import com.playhub.roommanager.dao.entities.RoomParticipantEntity;
+import com.playhub.roommanager.events.RoomCreatedEvent;
 import com.playhub.roommanager.exceptions.RoomNotFoundByIdException;
 import com.playhub.roommanager.mappers.RoomMapper;
 import com.playhub.roommanager.model.RoomParticipants;
@@ -16,6 +17,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -35,6 +37,8 @@ public class DaoRoomService implements RoomService {
 
     private final RoomInspector roomInspector;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     @Override
     @Transactional
     public RoomParticipants createRoom(@NotNull @Valid NewRoomRequest request) {
@@ -43,7 +47,9 @@ public class DaoRoomService implements RoomService {
                 .map(RoomParticipantEntity::newParticipant)
                 .forEach(room::addParticipant);
         RoomEntity savedRoom = dao.saveRoom(room);
-        return mapper.toRoomParticipants(savedRoom);
+        RoomParticipants roomParticipants = mapper.toRoomParticipants(savedRoom);
+        eventPublisher.publishEvent(new RoomCreatedEvent(this, roomParticipants));
+        return roomParticipants;
     }
 
     @Override
