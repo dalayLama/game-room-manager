@@ -4,8 +4,12 @@ import com.playhub.roommanager.components.RoomInspector;
 import com.playhub.roommanager.dao.RoomDao;
 import com.playhub.roommanager.dao.entities.RoomEntity;
 import com.playhub.roommanager.dao.entities.RoomParticipantEntity;
-import com.playhub.roommanager.events.RoomCreatedEvent;
+import com.playhub.roommanager.events.DomainEventType;
+import com.playhub.roommanager.events.ParticipantEvent;
+import com.playhub.roommanager.events.RoomEvent;
 import com.playhub.roommanager.mappers.RoomMapper;
+import com.playhub.roommanager.model.Room;
+import com.playhub.roommanager.model.RoomParticipant;
 import com.playhub.roommanager.model.RoomParticipants;
 import com.playhub.roommanager.model.requests.NewParticipantRequest;
 import com.playhub.roommanager.model.requests.NewRoomRequest;
@@ -13,7 +17,9 @@ import com.playhub.roommanager.service.testbuilders.NewParticipantRequestTestBui
 import com.playhub.roommanager.service.testbuilders.NewRoomRequestTestBuilder;
 import com.playhub.roommanager.service.testbuilders.RoomEntityTestBuilder;
 import com.playhub.roommanager.service.testbuilders.RoomParticipantEntityTestBuilder;
+import com.playhub.roommanager.service.testbuilders.RoomParticipantTestBuilder;
 import com.playhub.roommanager.service.testbuilders.RoomParticipantsTestBuilder;
+import com.playhub.roommanager.service.testbuilders.RoomTestBuilder;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,7 +76,7 @@ class DaoRoomServiceTest {
 
         RoomParticipants result = service.createRoom(request);
         assertThat(result).isSameAs(expectedResult);
-        verify(eventPublisher).publishEvent(new RoomCreatedEvent(service, expectedResult));
+        verify(eventPublisher).publishEvent(new RoomEvent(service, DomainEventType.NEW, expectedResult));
     }
 
     @Test
@@ -78,10 +84,13 @@ class DaoRoomServiceTest {
         UUID roomId = UUID.fromString("7aedb61f-8991-4806-b3ea-c815a4b5d253");
         RoomEntity room = RoomEntityTestBuilder.aRoom().build();
         NewParticipantRequest request = NewParticipantRequestTestBuilder.aRequest().build();
-
         RoomParticipants mockedResult = RoomParticipantsTestBuilder.aRoom().build();
+        Room mockedRoom = RoomTestBuilder.aRoom().build();
+        RoomParticipant mockedParticipant = RoomParticipantTestBuilder.aParticipant().build();
 
         SavingParticipantMatcher matcher = new SavingParticipantMatcher(request);
+        when(mapper.toRoom(room)).thenReturn(mockedRoom);
+        when(mapper.toRoomParticipant(any(RoomParticipantEntity.class))).thenReturn(mockedParticipant);
         when(dao.lockRoomForWriting(roomId)).thenReturn(Optional.of(room));
         when(dao.saveRoom(argThat(matcher))).thenAnswer(returnsFirstArg());
         when(mapper.toRoomParticipants(room)).thenReturn(mockedResult);
@@ -89,6 +98,9 @@ class DaoRoomServiceTest {
         RoomParticipants result = service.addParticipant(roomId, request);
 
         verify(inspector).inspectNewParticipant(room, request);
+        verify(eventPublisher).publishEvent(
+                new ParticipantEvent(service, DomainEventType.NEW, mockedRoom, mockedParticipant)
+        );
         assertThat(result).isSameAs(mockedResult);
     }
 
@@ -110,6 +122,7 @@ class DaoRoomServiceTest {
         RoomParticipants result = service.addParticipant(roomId, request);
 
         verify(inspector, never()).inspectNewParticipant(room, request);
+        verify(eventPublisher, never()).publishEvent(any());
         verify(dao, never()).saveRoom(any());
         assertThat(result).isSameAs(mockedResult);
     }
