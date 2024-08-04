@@ -83,12 +83,12 @@ public class DaoRoomService implements RoomService {
     @Transactional
     public void deleteRoom(@NotNull UUID id) {
         RoomEntity room = getById(dao::lockRoomForWriting, id);
-        dao.deleteRoom(room);
+        deleteRoom(room);
     }
 
     private void deleteParticipant(RoomEntity room, RoomParticipantEntity participant) {
         if (RoomUtil.isRoomOwner(participant, room) || room.getParticipants().size() < 2) {
-            dao.deleteRoom(room);
+            deleteRoom(room);
         } else {
             room.deleteParticipant(participant);
             dao.saveRoom(room);
@@ -120,6 +120,13 @@ public class DaoRoomService implements RoomService {
 
     private RoomEntity getById(Function<UUID, Optional<RoomEntity>> function, UUID id) {
         return function.apply(id).orElseThrow(() -> new RoomNotFoundByIdException(id));
+    }
+
+    private void deleteRoom(RoomEntity room) {
+        RoomParticipants roomParticipants = mapper.toRoomParticipants(room);
+        RoomEvent event = new RoomEvent(this, DomainEventType.DELETE, roomParticipants);
+        eventPublisher.publishEvent(event);
+        dao.deleteRoom(room);
     }
 
 }

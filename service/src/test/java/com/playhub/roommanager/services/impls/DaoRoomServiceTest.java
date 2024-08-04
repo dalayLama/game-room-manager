@@ -204,13 +204,32 @@ class DaoRoomServiceTest {
                 .withOwnerId(participantId)
                 .withParticipants(List.of(participant, participant2))
                 .build();
+        RoomParticipants mockedRoom = RoomParticipantsTestBuilder.aRoom().build();
 
         when(dao.lockRoomForWriting(roomId)).thenReturn(Optional.of(room));
+        when(mapper.toRoomParticipants(room)).thenReturn(mockedRoom);
 
         assertThatCode(() -> service.deleteParticipant(roomId, participantId)).doesNotThrowAnyException();
 
+        verify(eventPublisher).publishEvent(new RoomEvent(service, DomainEventType.DELETE, mockedRoom));
+        verify(eventPublisher, never()).publishEvent(any(ParticipantEvent.class));
         verify(dao, never()).saveRoom(room);
         verify(dao).deleteRoom(room);
+    }
+
+    @Test
+    void shouldDeleteRoom() {
+        UUID roomId = UUID.fromString("02cc26bc-b360-42e5-8925-dfa4224d767a");
+        RoomEntity room = RoomEntityTestBuilder.aRoom().withId(roomId).build();
+        RoomParticipants mockedRoom = RoomParticipantsTestBuilder.from(room).build();
+
+        when(dao.lockRoomForWriting(roomId)).thenReturn(Optional.of(room));
+        when(mapper.toRoomParticipants(room)).thenReturn(mockedRoom);
+
+        assertThatCode(() -> service.deleteRoom(roomId)).doesNotThrowAnyException();
+        verify(dao).deleteRoom(room);
+        verify(eventPublisher).publishEvent(new RoomEvent(service, DomainEventType.DELETE, mockedRoom));
+        verify(eventPublisher, never()).publishEvent(any(ParticipantEvent.class));
     }
 
     @RequiredArgsConstructor
